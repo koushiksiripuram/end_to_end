@@ -100,7 +100,7 @@ ssh -o StrictHostKeyChecking=no \
 
 rm -rf app
 
-git clone https://github.com/koushiksiripuram/terraform_manifests.git app
+git clone https://github.com/koushiksiripuram/end_to_end.git app
 
 mv /home/ubuntu/certbot-conf.tar.gz /home/ubuntu/app/docker/
 
