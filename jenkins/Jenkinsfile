@@ -20,7 +20,7 @@ pipeline {
 
                 sh """
                 docker build --no-cache \
-                -t $IMAGE_NAME:$IMAGE_TAG ../app/
+                -f docker/Dockerfile -t $IMAGE_NAME:$IMAGE_TAG .
                 """
             }
         }
