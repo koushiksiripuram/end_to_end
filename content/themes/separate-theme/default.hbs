@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="{{@site.locale}}" class="{{body_class}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{meta_title}}</title>
+  {{ghost_head}}
+  <link rel="stylesheet" href="{{asset "css/main.css"}}">
+</head>
+<body class="{{body_class}}">
+
+{{> header}}
+
+<main id="main-content">
+  {{{body}}}
+</main>
+
+{{> newsletter}}
+
+{{> footer}}
+
+<script src="{{asset "js/main.js"}}"></script>
+</body>
+</html>

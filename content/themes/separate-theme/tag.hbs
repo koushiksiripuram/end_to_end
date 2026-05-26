@@ -1,0 +1,21 @@
+{{!< default}}
+
+<div class="container">
+  <div class="tag-header">
+    <h1>{{name}}</h1>
+    {{#if description}}<p>{{description}}</p>{{/if}}
+  </div>
+</div>
+
+<section class="posts-section">
+  <div class="container">
+    <p class="section-label">// {{post_count}} posts tagged "{{name}}"</p>
+    <div class="post-grid">
+      {{#foreach posts}}
+        {{> post-card}}
+      {{/foreach}}
+    </div>
+  </div>
+</section>
+
+{{pagination}}

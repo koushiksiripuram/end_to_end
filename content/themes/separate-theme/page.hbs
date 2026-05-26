@@ -1,0 +1,27 @@
+{{!< default}}
+
+{{#page}}
+{{#if @page.show_title_and_feature_image}}
+<div class="post-header">
+  <div class="container">
+    <h1 class="post-title">{{title}}</h1>
+  </div>
+</div>
+
+{{#if feature_image}}
+<div class="post-feature-image">
+  <div class="container">
+    <img src="{{feature_image}}" alt="{{title}}">
+  </div>
+</div>
+{{/if}}
+{{/if}}
+{{/page}}
+
+<div class="post-content">
+  <div class="container">
+    <div class="gh-content">
+      {{content}}
+    </div>
+  </div>
+</div>

@@ -1,0 +1,66 @@
+{{!< default}}
+
+{{#is "home"}}
+<section class="hero">
+  <div class="container">
+    <p class="hero-tag">tech &amp; dev blog</p>
+    <h1>{{@site.title}}</h1>
+    <p>{{@site.description}}</p>
+  </div>
+</section>
+{{/is}}
+
+{{#is "home"}}
+{{#get "posts" limit="3" filter="featured:true"}}
+  {{#if posts}}
+  <section class="featured-section">
+    <div class="container">
+      <p class="section-label">// featured</p>
+      <div class="featured-grid">
+        {{#foreach posts}}
+          <article class="featured-card {{#if @first}}large{{/if}}">
+            <a href="{{url}}">
+              {{#if feature_image}}
+                <div class="card-image">
+                  <img src="{{feature_image}}" alt="{{title}}" loading="{{#if @first}}eager{{else}}lazy{{/if}}">
+                </div>
+              {{else}}
+                <div class="card-no-image">&lt;/&gt;</div>
+              {{/if}}
+            </a>
+            <div class="card-body">
+              {{#primary_tag}}
+                <a href="{{url}}" class="card-tag">{{name}}</a>
+              {{/primary_tag}}
+              <h2 class="card-title"><a href="{{url}}">{{title}}</a></h2>
+              <p class="card-excerpt">{{excerpt words="30"}}</p>
+              <div class="card-meta">
+                <span>{{date format="MMM DD, YYYY"}}</span>
+                {{#if reading_time}}
+                  <span class="card-meta-dot">&middot;</span>
+                  <span>{{reading_time}}</span>
+                {{/if}}
+              </div>
+              <a href="{{url}}" class="read-more">read more →</a>
+            </div>
+          </article>
+        {{/foreach}}
+      </div>
+    </div>
+  </section>
+  {{/if}}
+{{/get}}
+{{/is}}
+
+<section class="posts-section">
+  <div class="container">
+    <p class="section-label">// latest_posts</p>
+    <div class="post-grid">
+      {{#foreach posts}}
+        {{> post-card}}
+      {{/foreach}}
+    </div>
+  </div>
+</section>
+
+{{pagination}}

@@ -1,0 +1,16 @@
+<header class="site-header">
+  <div class="container">
+    <a href="{{@site.url}}" class="site-logo">
+      {{#if @site.logo}}
+        <img src="{{@site.logo}}" alt="{{@site.title}}" style="height:32px;width:auto;">
+      {{else}}
+        {{@site.title}}<span>.</span>
+      {{/if}}
+    </a>
+
+    <nav class="site-nav" aria-label="Main navigation">
+      {{navigation}}
+      <a href="{{@site.url}}/#newsletter" class="nav-subscribe">subscribe</a>
+    </nav>
+  </div>
+</header>

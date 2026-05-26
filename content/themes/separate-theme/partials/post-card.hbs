@@ -1,0 +1,25 @@
+<article class="post-card">
+  <a href="{{url}}">
+    {{#if feature_image}}
+      <div class="card-image">
+        <img src="{{feature_image}}" alt="{{title}}" loading="lazy">
+      </div>
+    {{else}}
+      <div class="card-no-image">&lt;/&gt;</div>
+    {{/if}}
+  </a>
+  <div class="card-body">
+    {{#primary_tag}}
+      <a href="{{url}}" class="card-tag">{{name}}</a>
+    {{/primary_tag}}
+    <h2 class="card-title"><a href="{{url}}">{{title}}</a></h2>
+    <p class="card-excerpt">{{excerpt words="20"}}</p>
+    <div class="card-meta">
+      <span>{{date format="MMM DD, YYYY"}}</span>
+      {{#if reading_time}}
+        <span class="card-meta-dot">&middot;</span>
+        <span>{{reading_time}}</span>
+      {{/if}}
+    </div>
+  </div>
+</article>
