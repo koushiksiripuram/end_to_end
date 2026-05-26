@@ -1,0 +1,165 @@
+pipeline {
+
+    agent any
+
+    environment {
+
+        IMAGE_NAME = "koushiksiripuram/ghost-app"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+
+        EC2_HOST = "13.127.39.218"
+    }
+
+    stages {
+
+        stage('Build Docker Image') {
+
+            steps {
+
+                sh "docker rmi $IMAGE_NAME:$IMAGE_TAG || true"
+
+                sh """
+                docker build --no-cache \
+                -t $IMAGE_NAME:$IMAGE_TAG .
+                """
+            }
+        }
+
+        stage('Docker Hub Login') {
+
+            steps {
+
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+
+                    sh '''
+                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                    '''
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+
+            steps {
+
+                sh "docker push $IMAGE_NAME:$IMAGE_TAG"
+            }
+        }
+
+        stage('Terraform Init') {
+
+            steps {
+
+                dir('terraform') {
+
+                    sh 'terraform init'
+
+                    sh 'terraform plan'
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
+
+            steps {
+
+                dir('terraform') {
+
+                    sh 'terraform apply -auto-approve'
+                }
+            }
+        }
+
+        stage('Wait For EC2') {
+
+            steps {
+
+                sh 'sleep 60'
+            }
+        }
+
+        stage('Deploy To EC2') {
+
+            steps {
+
+                sh """
+chmod 400 /tmp/master.pem
+
+aws s3 cp s3://amzs3-dem-bucketcicd/certbot-conf.tar.gz .
+
+scp -o StrictHostKeyChecking=no \
+-i /tmp/master.pem \
+certbot-conf.tar.gz ubuntu@${EC2_HOST}:/home/ubuntu/
+
+ssh -o StrictHostKeyChecking=no \
+-i /tmp/master.pem ubuntu@${EC2_HOST} << EOF
+
+rm -rf app
+
+git clone https://github.com/koushiksiripuram/terraform_manifests.git app
+
+mv /home/ubuntu/certbot-conf.tar.gz /home/ubuntu/app/docker/
+
+cd /home/ubuntu/app/docker
+
+tar -xzvf certbot-conf.tar.gz
+
+sed -i 's|image: .*|image: ${IMAGE_NAME}:${IMAGE_TAG}|' docker-compose.yaml
+
+cd ../scripts
+
+chmod +x install.sh
+
+./install.sh
+
+sudo systemctl enable docker
+
+sudo systemctl start docker
+
+cd ../docker
+
+sudo docker compose down --remove-orphans
+
+sudo docker network prune -f
+
+sudo docker image rm ${IMAGE_NAME}:${IMAGE_TAG} || true
+
+sudo docker compose pull
+
+sudo docker compose up -d --force-recreate
+
+EOF
+"""
+            }
+        }
+
+        stage('Health Check') {
+
+            steps {
+
+                sh """
+sleep 30
+
+curl -Ik https://ghostapp.duckdns.org
+"""
+            }
+        }
+    }
+
+    post {
+
+        success {
+
+            echo 'Deployment completed successfully!'
+        }
+
+        failure {
+
+            echo 'Pipeline failed!'
+        }
+    }
+}

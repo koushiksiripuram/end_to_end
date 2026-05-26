@@ -1,0 +1,86 @@
+services:
+
+  mysql:
+    image: mysql:8
+    container_name: ghost-db
+    restart: always
+
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: ghost
+      MYSQL_USER: ghost
+      MYSQL_PASSWORD: ghostpass
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+    ports:
+      - "3307:3306"
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  ghost:
+    image: koushiksiripuram/ghost-app:latest
+    container_name: ghost-app
+    restart: always
+
+    expose:
+      - "2368"
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    volumes:
+      - ghost_data:/var/lib/ghost/content
+
+    environment:
+      database__client: mysql
+      database__connection__host: mysql
+      database__connection__user: ghost
+      database__connection__password: ghostpass
+      database__connection__database: ghost
+
+      url: https://ghostapp.duckdns.org
+
+  nginx:
+    image: nginx:alpine
+    container_name: ghost-nginx
+    restart: always
+
+    depends_on:
+      - ghost
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+
+volumes:
+  mysql_data:
+  ghost_data:
+
+
+
+
+
+
+
+
+
