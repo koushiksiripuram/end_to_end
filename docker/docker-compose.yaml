@@ -37,6 +37,7 @@ services:
 
     volumes:
       - ghost_data:/var/lib/ghost/content
+      - ../content/themes:/var/lib/ghost/content/themes
 
     environment:
       database__client: mysql
