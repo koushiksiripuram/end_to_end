@@ -16,3 +16,7 @@ variable "public_ip" {
 
   default = "43.205.58.192"
 }
+variable "mail_endpoint" {
+
+  default = "koushiksiripuram48@gmail.com"
+}
