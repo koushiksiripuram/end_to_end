@@ -31,7 +31,7 @@ resource "aws_eip_association" "ghost_assoc" {
 }
 resource "aws_instance" "ghost_server" {
 
-  ami = data.aws_ami.ubuntu.id
+  ami = var.ami_id
 
   instance_type = var.instance_type
 

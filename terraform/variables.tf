@@ -8,6 +8,10 @@ variable "instance_type" {
   default = "t2.micro"
 }
 
+variable "ami_id" {
+
+  default = "ami-091138d0f0d41ff90"
+}
 variable "key_name" {
 
   default = "master"
