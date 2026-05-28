@@ -7,7 +7,7 @@ pipeline {
         IMAGE_NAME = "koushiksiripuram/ghost-app"
         IMAGE_TAG = "${BUILD_NUMBER}"
 
-        EC2_HOST = var.public_ip
+        EC2_HOST = "52.70.236.14"
     }
 
     stages {
