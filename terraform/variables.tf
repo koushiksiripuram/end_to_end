@@ -5,7 +5,7 @@ variable "aws_region" {
 
 variable "instance_type" {
 
-  default = "t3.micro"
+  default = "m7i-flex.large"
 }
 
 variable "ami_id" {
