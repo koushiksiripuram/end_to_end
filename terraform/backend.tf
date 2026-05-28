@@ -3,11 +3,11 @@ terraform {
 
   backend "s3" {
 
-    bucket = "amzs3-dem-bucketcicd"
+    bucket = "aws-s3-cicd-bucket-5132"
 
     key = "terraform.tfstate"
 
-    region = "ap-south-1"
+    region = "us-east-1"
 
     dynamodb_table = "terraform-lock"
 

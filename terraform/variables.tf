@@ -1,6 +1,6 @@
 variable "aws_region" {
 
-  default = "ap-south-1"
+  default = "us-east-1"
 }
 
 variable "instance_type" {
@@ -14,7 +14,7 @@ variable "key_name" {
 }
 variable "public_ip" {
 
-  default = "43.205.58.192"
+  default = "52.70.236.14"
 }
 variable "mail_endpoint" {
 
