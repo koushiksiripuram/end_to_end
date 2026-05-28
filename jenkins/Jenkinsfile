@@ -87,6 +87,8 @@ pipeline {
             steps {
 
                 sh """
+aws s3 cp s3://aws-s3-cicd-bucket-5132/master.pem /tmp/master.pem
+
 chmod 400 /tmp/master.pem
 
 aws s3 cp s3://aws-s3-cicd-bucket-5132/certbot-conf.tar.gz .
