@@ -89,7 +89,7 @@ pipeline {
                 sh """
 chmod 400 /tmp/master.pem
 
-aws s3 cp s3://amzs3-dem-bucketcicd/certbot-conf.tar.gz .
+aws s3 cp s3://aws-s3-cicd-bucket-5132/certbot-conf.tar.gz .
 
 scp -o StrictHostKeyChecking=no \
 -i /tmp/master.pem \
