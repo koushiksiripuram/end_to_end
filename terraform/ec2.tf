@@ -1,6 +1,24 @@
 resource "aws_default_vpc" "default" {
 
 }
+
+data "aws_ami" "ubuntu" {
+
+  most_recent = true
+
+  owners = ["099720109477"]
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
 data "aws_eip" "ghost_eip" {
 
   public_ip = var.public_ip
@@ -13,7 +31,7 @@ resource "aws_eip_association" "ghost_assoc" {
 }
 resource "aws_instance" "ghost_server" {
 
-  ami = "ami-0e35ddab05955cf57"
+  ami = data.aws_ami.ubuntu.id
 
   instance_type = var.instance_type
 
