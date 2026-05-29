@@ -7,7 +7,8 @@ pipeline {
         IMAGE_NAME = "koushiksiripuram/ghost-app"
         IMAGE_TAG = "${BUILD_NUMBER}"
 
-        EC2_HOST = "52.70.236.14"
+        EC2_HOST ="${env.EC2_HOST}"
+        S3_BUCKET = "${env.S3_BUCKET}"
     }
 
     stages {
@@ -69,7 +70,7 @@ pipeline {
 
                 dir('terraform') {
 
-                    sh 'terraform apply -auto-approve'
+                    sh 'terraform apply -auto-approve -var="public_ip=$EC2_HOST"'
                 }
             }
         }
@@ -87,11 +88,11 @@ pipeline {
             steps {
 
                 sh """
-aws s3 cp s3://aws-s3-cicd-bucket-5132/master.pem /tmp/master.pem
+aws s3 cp s3://$S3_BUCKET/master.pem /tmp/master.pem
 
 chmod 400 /tmp/master.pem
 
-aws s3 cp s3://aws-s3-cicd-bucket-5132/certbot-conf.tar.gz .
+aws s3 cp s3://$S3_BUCKET/certbot-conf.tar.gz .
 
 scp -o StrictHostKeyChecking=no \
 -i /tmp/master.pem \

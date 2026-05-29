@@ -18,7 +18,7 @@ variable "key_name" {
 }
 variable "public_ip" {
 
-  default = "52.70.236.14"
+  type = string
 }
 variable "mail_endpoint" {
 
