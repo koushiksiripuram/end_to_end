@@ -59,7 +59,7 @@ pipeline {
 
                     sh 'terraform init'
 
-                    sh 'terraform plan'
+                    sh 'terraform plan -var="public_ip=$EC2_HOST"'
                 }
             }
         }
