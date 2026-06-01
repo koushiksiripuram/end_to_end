@@ -98,7 +98,7 @@ aws s3 cp s3://$S3_BUCKET/master.pem /tmp/master.pem
 chmod 400 /tmp/master.pem
 
 aws s3 cp s3://$S3_BUCKET/certbot-conf.tar.gz .
-aws s3 cp s3://$S3_BUCKET/ghost.env .env
+aws s3 cp s3://$S3_BUCKET/ghost.env ghost.env
 scp -o StrictHostKeyChecking=no \
 -i /tmp/master.pem \
 certbot-conf.tar.gz ghost.env \
