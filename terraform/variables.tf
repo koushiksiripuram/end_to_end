@@ -22,5 +22,5 @@ variable "public_ip" {
 }
 variable "mail_endpoint" {
 
-  default = "koushiksiripuram48@gmail.com"
+  type = string
 }

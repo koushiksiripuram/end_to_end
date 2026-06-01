@@ -9,6 +9,8 @@ pipeline {
 
         EC2_HOST ="${env.EC2_HOST}"
         S3_BUCKET = "${env.S3_BUCKET}"
+        ALERT_EMAIL = "${env.ALERT_EMAIL}"
+        TF_lOCK_TABLE = "${env.TF_LOCK_TABLE}"
     }
 
     stages {
@@ -57,9 +59,12 @@ pipeline {
 
                 dir('terraform') {
 
-                    sh 'terraform init'
-
-                    sh 'terraform plan -var="public_ip=$EC2_HOST"'
+                    sh '''
+                    terraform init \
+            -backend-config="bucket=$S3_BUCKET" \
+            -backend-config="dynamodb_table=$TF_LOCK_TABLE"
+                    '''
+                    sh 'terraform plan -var="public_ip=$EC2_HOST" -var="mail_endpoint=$ALERT_EMAIL"'
                 }
             }
         }
@@ -70,7 +75,7 @@ pipeline {
 
                 dir('terraform') {
 
-                    sh 'terraform apply -auto-approve -var="public_ip=$EC2_HOST"'
+                    sh 'terraform apply -auto-approve -var="public_ip=$EC2_HOST" -var="mail_endpoint=$ALERT_EMAIL"'
                 }
             }
         }
@@ -93,10 +98,11 @@ aws s3 cp s3://$S3_BUCKET/master.pem /tmp/master.pem
 chmod 400 /tmp/master.pem
 
 aws s3 cp s3://$S3_BUCKET/certbot-conf.tar.gz .
-
+aws s3 cp s3://$S3_BUCKET/ghost.env .env
 scp -o StrictHostKeyChecking=no \
 -i /tmp/master.pem \
-certbot-conf.tar.gz ubuntu@${EC2_HOST}:/home/ubuntu/
+certbot-conf.tar.gz ghost.env \
+ubuntu@${EC2_HOST}:/home/ubuntu/
 
 ssh -o StrictHostKeyChecking=no \
 -i /tmp/master.pem ubuntu@${EC2_HOST} << EOF
@@ -106,6 +112,7 @@ rm -rf app
 git clone https://github.com/koushiksiripuram/end_to_end.git app
 
 mv /home/ubuntu/certbot-conf.tar.gz /home/ubuntu/app/docker/
+mv /home/ubuntu/ghost.env /home/ubuntu/app/docker/.env
 
 cd /home/ubuntu/app/docker
 
