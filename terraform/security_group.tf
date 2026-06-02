@@ -1,4 +1,4 @@
-data "aws_security_group" "launch-wizard-2" {
+data "aws_security_group" "jenkins_sg" {
 
   name = "launch-wizard-2"
 }
