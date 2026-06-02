@@ -6,10 +6,11 @@ resource "aws_security_group" "ghost_sg" {
 
   name = "ghost_sg"
   ingress {
-    from_port       = 22
-    to_port         = 22
-    protocol        = "tcp"
-    security_groups = [aws_security_group.launch-wizard-2.id]
+    from_port = 22
+    to_port   = 22
+    protocol  = "tcp"
+
+    security_groups = [data.aws_security_group.jenkins_sg.id]
   }
   ingress {
 
