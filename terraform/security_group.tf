@@ -7,7 +7,7 @@ resource "aws_security_group" "ghost_sg" {
     to_port   = 22
     protocol  = "tcp"
 
-    cidr_blocks = ["223.228.123.210/32"]
+    cidr_blocks = ["172.31.27.160/32"]
   }
   ingress {
 
