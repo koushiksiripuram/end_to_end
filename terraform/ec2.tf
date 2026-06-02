@@ -23,6 +23,10 @@ data "aws_eip" "ghost_eip" {
 
   public_ip = var.public_ip
 }
+data "aws_security_group" "launch-wizard-2" {
+
+  name = "launch-wizard-2"
+}
 resource "aws_eip_association" "ghost_assoc" {
 
   instance_id = aws_instance.ghost_server.id
