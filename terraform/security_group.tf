@@ -1,3 +1,7 @@
+data "aws_security_group" "launch-wizard-2" {
+
+  name = "launch-wizard-2"
+}
 resource "aws_security_group" "ghost_sg" {
 
   name = "ghost_sg"
