@@ -76,6 +76,7 @@ pipeline {
                 dir('terraform') {
 
                     sh 'terraform apply -auto-approve -var="public_ip=$EC2_HOST" -var="mail_endpoint=$ALERT_EMAIL"'
+                    sh 'APP_IP=$(terraform output -raw app_private_ip)'
                 }
             }
         }
@@ -102,10 +103,10 @@ aws s3 cp s3://$S3_BUCKET/ghost.env ghost.env
 scp -o StrictHostKeyChecking=no \
 -i /tmp/master.pem \
 certbot-conf.tar.gz ghost.env \
-ubuntu@${EC2_HOST}:/home/ubuntu/
+ubuntu@$APP_IP:/home/ubuntu/
 
 ssh -o StrictHostKeyChecking=no \
--i /tmp/master.pem ubuntu@${EC2_HOST} << EOF
+-i /tmp/master.pem ubuntu@$APP_IP << EOF
 
 rm -rf app
 
