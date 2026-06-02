@@ -11,6 +11,7 @@ pipeline {
         S3_BUCKET = "${env.S3_BUCKET}"
         ALERT_EMAIL = "${env.ALERT_EMAIL}"
         TF_lOCK_TABLE = "${env.TF_LOCK_TABLE}"
+        APP_IP = "${env.APP_IP}"
     }
 
     stages {
