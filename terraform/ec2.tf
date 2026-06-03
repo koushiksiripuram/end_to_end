@@ -2,6 +2,13 @@ resource "aws_default_vpc" "default" {
 
 }
 
+data "aws_ebs_volume" "ghost_data" {
+  filter {
+    name   = "tag:Name"
+    values = ["ghost-data"]
+  }
+}
+
 data "aws_ami" "ubuntu" {
 
   most_recent = true
@@ -45,4 +52,9 @@ resource "aws_instance" "ghost_server" {
   tags = {
     Name = "ghost-server"
   }
+}
+resource "aws_volume_attachment" "ghost_data_attach" {
+  device_name = "/dev/sdf"
+  volume_id   = data.aws_ebs_volume.ghost_data.id
+  instance_id = aws_instance.ghost_server.id
 }

@@ -36,7 +36,7 @@ services:
         condition: service_healthy
 
     volumes:
-      - ghost_data:/var/lib/ghost/content
+      - /data/ghost:/var/lib/ghost/content
       - ../content/themes:/var/lib/ghost/content/themes
 
     environment:
