@@ -5,7 +5,7 @@ resource "aws_default_vpc" "default" {
 data "aws_ebs_volume" "ghost_data" {
   filter {
     name   = "tag:Name"
-    values = ["ghost-data"]
+    values = ["ghost_data"]
   }
 }
 
