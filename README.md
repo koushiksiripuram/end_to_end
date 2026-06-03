@@ -44,7 +44,7 @@ Let's Encrypt SSL
 
 CloudWatch ───► SNS ───► Email Alerts
 ```
-
+--
 ---
 
 ## Features
