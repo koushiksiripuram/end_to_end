@@ -138,7 +138,7 @@ cd /home/ubuntu/app/docker
 
 tar -xzvf certbot-conf.tar.gz
 
-sed -i '/ghost:/,/container_name:/ s|image: .*|image: '"${IMAGE_NAME}:${IMAGE_TAG}"'|' docker-compose.yaml
+sed -i '/  ghost:/,/  nginx:/ s|image: .*|image: '"${IMAGE_NAME}:${IMAGE_TAG}"'|' docker-compose.yaml
 
 cd ../scripts
 
