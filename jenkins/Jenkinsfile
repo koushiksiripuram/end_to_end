@@ -143,7 +143,6 @@ sed -i '/  ghost:/,/  nginx:/ s|image: .*|image: '"${IMAGE_NAME}:${IMAGE_TAG}"'|
 cd ../scripts
 
 chmod +x install.sh
-
 ./install.sh
 
 sudo systemctl enable docker
