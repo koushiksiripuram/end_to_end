@@ -115,7 +115,7 @@ ubuntu@$APP_IP:/home/ubuntu/
 ssh -o StrictHostKeyChecking=no \
 -i /tmp/master.pem ubuntu@$APP_IP << EOF
 sudo mkdir -p /data/ghost
-
+sudo mkdir -p /data/mysql
 if ! mountpoint -q /data/ghost; then
 
     if ! blkid /dev/nvme1n1 > /dev/null 2>&1; then
@@ -126,6 +126,18 @@ if ! mountpoint -q /data/ghost; then
 
     grep -q "/data/ghost" /etc/fstab || \
     echo '/dev/nvme1n1 /data/ghost ext4 defaults,nofail 0 2' | sudo tee -a /etc/fstab
+fi
+
+if ! mountpoint -q /data/mysql; then
+
+    if ! blkid /dev/nvme1n1 > /dev/null 2>&1; then
+        sudo mkfs.ext4 /dev/nvme1n1
+    fi
+
+    sudo mount /dev/nvme1n1 /data/mysql || true
+
+    grep -q "/data/mysql" /etc/fstab || \
+    echo '/dev/nvme1n1 /data/mysql ext4 defaults,nofail 0 2' | sudo tee -a /etc/fstab
 fi
 rm -rf app
 
