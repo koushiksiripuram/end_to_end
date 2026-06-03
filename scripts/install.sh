@@ -15,5 +15,6 @@ sudo usermod -aG docker $USER
 rm get-docker.sh
 
 sudo apt install certbot -y
+
 echo "Installation complete. Please log out and back in for group changes to take effect."
 
