@@ -12,4 +12,5 @@ output "elastic_ip" {
 }
 output "app_private_ip" {
   value = aws_instance.ghost_server.private_ip
+
 }
