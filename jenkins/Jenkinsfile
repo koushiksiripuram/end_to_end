@@ -98,7 +98,18 @@ echo "APP_IP=${env.APP_IP}"
                 sh 'sleep 60'
             }
         }
-        stage('Determine Color') {
+        stage('Prepare SSH Key') {
+
+    steps {
+
+        sh """
+aws s3 cp s3://$S3_BUCKET/master.pem /tmp/master.pem
+chmod 400 /tmp/master.pem
+"""
+    }
+}
+
+stage('Determine Color') {
 
     steps {
 
@@ -113,7 +124,7 @@ ssh -o StrictHostKeyChecking=no \
                 returnStdout: true
             ).trim()
 
-            env.TARGET = env.ACTIVE == "blue" ? "green" : "blue"
+            env.TARGET = (env.ACTIVE == "blue") ? "green" : "blue"
 
             echo "ACTIVE=${env.ACTIVE}"
             echo "TARGET=${env.TARGET}"
@@ -126,9 +137,6 @@ ssh -o StrictHostKeyChecking=no \
             steps {
 
                 sh """
-        aws s3 cp s3://$S3_BUCKET/master.pem /tmp/master.pem
-
-        chmod 400 /tmp/master.pem
 
         aws s3 cp s3://$S3_BUCKET/certbot-conf.tar.gz .
         aws s3 cp s3://$S3_BUCKET/ghost.env ghost.env
@@ -183,12 +191,12 @@ ssh -o StrictHostKeyChecking=no \
         sudo systemctl start docker
 
         cd ../docker
-        echo "Deploying to ${TARGET} environment"
+        echo "Deploying to ${env.TARGET} environment"
         sed -i '/ghost-blue:/,/container_name:/ s|image: .*|image: '"${IMAGE_NAME}:${IMAGE_TAG}"'|' docker-compose.yaml
         sed -i '/ghost-green:/,/container_name:/ s|image: .*|image: '"${IMAGE_NAME}:${IMAGE_TAG}"'|' docker-compose.yaml
         sudo docker compose pull 
 
-        sudo docker compose up -d ghost-${TARGET}
+        sudo docker compose up -d ghost-${env.TARGET}
 
         EOF
 """
@@ -206,7 +214,7 @@ for i in {1..20}
 do
     if ssh -o StrictHostKeyChecking=no \
        -i /tmp/master.pem ubuntu@${APP_IP} \
-       "sudo docker exec ghost-nginx wget -qO- http://ghost-${TARGET}:2368 > /dev/null 2>&1"
+       "sudo docker exec ghost-nginx wget -qO- http://ghost-${env.TARGET}:2368 > /dev/null 2>&1"
     then
         exit 0
     fi
@@ -229,7 +237,7 @@ ssh -o StrictHostKeyChecking=no \
 
 cd /home/ubuntu/app/docker
 
-if [ "${TARGET}" = "green" ]; then
+if [ "${env.TARGET}" = "green" ]; then
 
     sed -i 's/server ghost-blue:2368;/server ghost-green:2368;/g' nginx/default.conf
 
@@ -241,9 +249,9 @@ fi
 
 sudo docker exec ghost-nginx nginx -s reload
 
-echo ${TARGET} | sudo tee /data/current-color
+echo ${env.TARGET} | sudo tee /data/current-color
 
-sudo docker stop ghost-${ACTIVE} || true
+sudo docker stop ghost-${env.ACTIVE} || true
 
 EOF
 """
