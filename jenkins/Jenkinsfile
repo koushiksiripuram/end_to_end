@@ -199,7 +199,7 @@ TARGET=\$(cat /tmp/deploy-target)
 
 sleep 30
 cd /home/ubuntu/app/docker
-for i in $(seq 1 20)
+for i in \$(seq 1 20)
 do
     if sudo docker exec ghost-nginx \
        wget -qO- http://ghost-\$TARGET:2368 >/dev/null 2>&1
