@@ -121,7 +121,6 @@ ssh -o StrictHostKeyChecking=no \
     }
 }
         
-
         stage('Health Check') {
 
     steps {
