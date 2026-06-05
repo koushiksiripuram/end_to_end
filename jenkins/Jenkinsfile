@@ -113,7 +113,7 @@ echo "APP_IP=${env.APP_IP}"
         ubuntu@$APP_IP:/home/ubuntu/
 
         ssh -o StrictHostKeyChecking=no \
-        -i /tmp/master.pem ubuntu@$APP_IP << EOF
+        -i /tmp/master.pem ubuntu@$APP_IP << 'EOF'
         sudo mkdir -p /data
 
         if ! mountpoint -q /data; then
