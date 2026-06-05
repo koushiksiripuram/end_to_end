@@ -3,19 +3,30 @@ set -e
 
 TARGET=$(cat /tmp/deploy-target)
 
+echo "Target deployment: $TARGET"
+
 sleep 30
 
 cd /home/ubuntu/app/docker
 
 for i in $(seq 1 20)
 do
-    if sudo docker exec ghost-nginx \
-       wget -qO- http://ghost-$TARGET:2368 >/dev/null 2>&1
-    then
+    STATUS=$(sudo docker exec ghost-nginx \
+        curl -s -o /dev/null -w "%{http_code}" \
+        http://ghost-$TARGET:2368)
+
+    echo "Attempt $i - HTTP Status: $STATUS"
+
+    if [ "$STATUS" = "200" ] || \
+       [ "$STATUS" = "301" ] || \
+       [ "$STATUS" = "302" ]; then
 
         echo "Health check passed"
 
         CURRENT=$(cat /data/current-color)
+
+        echo "Current active: $CURRENT"
+        echo "Switching to: $TARGET"
 
         if [ "$TARGET" = "green" ]; then
 
@@ -27,19 +38,26 @@ do
 
         fi
 
+        echo "Restarting nginx"
+
         sudo docker exec ghost-nginx nginx -s reload
 
-        echo $TARGET | sudo tee /data/current-color
+        echo "$TARGET" | sudo tee /data/current-color
 
-        sudo docker rm -f ghost-$CURRENT || true
+        echo "Stopping old environment: $CURRENT"
 
-        echo "Traffic switched to $TARGET"
+        sudo docker stop ghost-$CURRENT || true
+
+        echo "Traffic switched successfully to $TARGET"
 
         exit 0
     fi
 
+    echo "Health check failed, retrying..."
+
     sleep 5
 done
 
-echo "Deployment failed"
+echo "Deployment failed after 20 attempts"
+
 exit 1
