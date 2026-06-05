@@ -11,6 +11,9 @@ pipeline {
         S3_BUCKET = "${env.S3_BUCKET}"
         ALERT_EMAIL = "${env.ALERT_EMAIL}"
         TF_lOCK_TABLE = "${env.TF_LOCK_TABLE}"
+        ACTIVE = ""
+        TARGET = ""
+        HEALTHY = "false"
     }
 
     stages {
@@ -95,127 +98,157 @@ echo "APP_IP=${env.APP_IP}"
                 sh 'sleep 60'
             }
         }
+        stage('Determine Color') {
+
+    steps {
+
+        script {
+
+            env.ACTIVE = sh(
+                script: """
+ssh -o StrictHostKeyChecking=no \
+-i /tmp/master.pem ubuntu@${APP_IP} \
+'cat /data/current-color 2>/dev/null || echo blue'
+""",
+                returnStdout: true
+            ).trim()
+
+            env.TARGET = env.ACTIVE == "blue" ? "green" : "blue"
+
+            echo "ACTIVE=${env.ACTIVE}"
+            echo "TARGET=${env.TARGET}"
+        }
+    }
+}
 
         stage('Deploy To EC2') {
 
             steps {
 
                 sh """
-aws s3 cp s3://$S3_BUCKET/master.pem /tmp/master.pem
+        aws s3 cp s3://$S3_BUCKET/master.pem /tmp/master.pem
 
-chmod 400 /tmp/master.pem
+        chmod 400 /tmp/master.pem
 
-aws s3 cp s3://$S3_BUCKET/certbot-conf.tar.gz .
-aws s3 cp s3://$S3_BUCKET/ghost.env ghost.env
-scp -o StrictHostKeyChecking=no \
--i /tmp/master.pem \
-certbot-conf.tar.gz ghost.env \
-ubuntu@$APP_IP:/home/ubuntu/
+        aws s3 cp s3://$S3_BUCKET/certbot-conf.tar.gz .
+        aws s3 cp s3://$S3_BUCKET/ghost.env ghost.env
+        scp -o StrictHostKeyChecking=no \
+        -i /tmp/master.pem \
+        certbot-conf.tar.gz ghost.env \
+        ubuntu@$APP_IP:/home/ubuntu/
 
-ssh -o StrictHostKeyChecking=no \
--i /tmp/master.pem ubuntu@$APP_IP << EOF
-sudo mkdir -p /data
+        ssh -o StrictHostKeyChecking=no \
+        -i /tmp/master.pem ubuntu@$APP_IP << EOF
+        sudo mkdir -p /data
 
-if ! mountpoint -q /data; then
+        if ! mountpoint -q /data; then
 
-    if ! blkid /dev/nvme1n1 > /dev/null 2>&1; then
-        sudo mkfs.ext4 /dev/nvme1n1
-    fi
+            if ! blkid /dev/nvme1n1 > /dev/null 2>&1; then
+                sudo mkfs.ext4 /dev/nvme1n1
+            fi
 
-    sudo mount /dev/nvme1n1 /data
+            sudo mount /dev/nvme1n1 /data
 
-    grep -q "/data " /etc/fstab || \
-    echo '/dev/nvme1n1 /data ext4 defaults,nofail 0 2' | sudo tee -a /etc/fstab
-fi
+            grep -q "/data " /etc/fstab || \
+            echo '/dev/nvme1n1 /data ext4 defaults,nofail 0 2' | sudo tee -a /etc/fstab
+        fi
 
-sudo mkdir -p /data/ghost
-sudo mkdir -p /data/mysql
+        sudo mkdir -p /data/ghost
+        sudo mkdir -p /data/mysql
 
-sudo chown -R 999:999 /data/mysql
-sudo chmod -R 755 /data/mysql
-sudo chown -R 999:999 /data/ghost
-sudo chmod -R 755 /data/ghost
-rm -rf app
+        sudo chown -R 999:999 /data/mysql
+        sudo chmod -R 755 /data/mysql
+        sudo chown -R 999:999 /data/ghost
+        sudo chmod -R 755 /data/ghost
+        rm -rf app
 
-git clone https://github.com/koushiksiripuram/end_to_end.git app
+        git clone https://github.com/koushiksiripuram/end_to_end.git app
 
-mv /home/ubuntu/certbot-conf.tar.gz /home/ubuntu/app/docker/
-mv /home/ubuntu/ghost.env /home/ubuntu/app/docker/.env
+        mv /home/ubuntu/certbot-conf.tar.gz /home/ubuntu/app/docker/
+        mv /home/ubuntu/ghost.env /home/ubuntu/app/docker/.env
 
-cd /home/ubuntu/app/docker
+        cd /home/ubuntu/app/docker
 
-tar -xzvf certbot-conf.tar.gz
+        tar -xzvf certbot-conf.tar.gz
 
-sed -i '/  ghost:/,/  nginx:/ s|image: .*|image: '"${IMAGE_NAME}:${IMAGE_TAG}"'|' docker-compose.yaml
+        sed -i '/  ghost:/,/  nginx:/ s|image: .*|image: '"${IMAGE_NAME}:${IMAGE_TAG}"'|' docker-compose.yaml
 
-cd ../scripts
+        cd ../scripts
 
-chmod +x install.sh
-./install.sh
+        chmod +x install.sh
+        ./install.sh
 
-sudo systemctl enable docker
+        sudo systemctl enable docker
 
-sudo systemctl start docker
+        sudo systemctl start docker
 
-cd ../docker
-if [ ! -f /data/current-color ]; then
-    echo blue | sudo tee /data/current-color
-fi
+        cd ../docker
+        echo "Deploying to ${TARGET} environment"
+        sed -i '/ghost-blue:/,/container_name:/ s|image: .*|image: '"${IMAGE_NAME}:${IMAGE_TAG}"'|' docker-compose.yaml
+        sed -i '/ghost-green:/,/container_name:/ s|image: .*|image: '"${IMAGE_NAME}:${IMAGE_TAG}"'|' docker-compose.yaml
+        sudo docker compose pull 
 
-ACTIVE=\$(cat /data/current-color)
+        sudo docker compose up -d ghost-${TARGET}
 
-if [ "\$ACTIVE" = "blue" ]; then
-    TARGET="green"
-else
-    TARGET="blue"
-fi
-sudo docker pull ${IMAGE_NAME}:${IMAGE_TAG}
-
-sudo docker compose up -d ghost-\$TARGET
-
-EOF
+        EOF
 """
             }
         }
 
         stage('Health Check') {
 
-            steps {
+    steps {
 
-                sh """
+        sh """
 sleep 30
-curl -I https://ghostapp.duckdns.org
+
 for i in {1..20}
 do
-    if sudo docker exec ghost-nginx wget -qO- http://ghost-\$TARGET:2368 > /dev/null 2>&1
+    if ssh -o StrictHostKeyChecking=no \
+       -i /tmp/master.pem ubuntu@${APP_IP} \
+       "sudo docker exec ghost-nginx wget -qO- http://ghost-${TARGET}:2368 > /dev/null 2>&1"
     then
-        HEALTHY=true
-        break
+        exit 0
     fi
 
     sleep 5
 done
 
-if [ "\$HEALTHY" != "true" ]; then
-    echo "Deployment failed"
-    exit 1
-fi
+echo "Deployment failed"
+exit 1
+"""
+    }
+}
+stage('Switch Traffic') {
 
-if [ "\$TARGET" = "green" ]; then
+    steps {
 
-    sudo sed -i 's/server ghost-blue:2368;/server ghost-green:2368;/g' nginx/default.conf
+        sh """
+ssh -o StrictHostKeyChecking=no \
+-i /tmp/master.pem ubuntu@${APP_IP} << EOF
+
+cd /home/ubuntu/app/docker
+
+if [ "${TARGET}" = "green" ]; then
+
+    sed -i 's/server ghost-blue:2368;/server ghost-green:2368;/g' nginx/default.conf
 
 else
 
-    sudo sed -i 's/server ghost-green:2368;/server ghost-blue:2368;/g' nginx/default.conf
+    sed -i 's/server ghost-green:2368;/server ghost-blue:2368;/g' nginx/default.conf
 
 fi
+
 sudo docker exec ghost-nginx nginx -s reload
-echo \$TARGET | sudo tee /data/current-color
-sudo docker stop ghost-\$ACTIVE
+
+echo ${TARGET} | sudo tee /data/current-color
+
+sudo docker stop ghost-${ACTIVE} || true
+
+EOF
 """
-            }
-        }
+    }
+}
     }
 
     post {
