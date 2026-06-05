@@ -113,7 +113,7 @@ echo "APP_IP=${env.APP_IP}"
         ubuntu@$APP_IP:/home/ubuntu/
 
         ssh -o StrictHostKeyChecking=no \
-        -i /tmp/master.pem ubuntu@$APP_IP << 'EOF'
+        -i /tmp/master.pem ubuntu@$APP_IP <<
         sudo mkdir -p /data
 
         if ! mountpoint -q /data; then
@@ -161,16 +161,16 @@ if [ ! -f /data/current-color ]; then
     echo blue | sudo tee /data/current-color
 fi
 
-CURRENT=$(cat /data/current-color)
+CURRENT=\$(cat /data/current-color)
 
-if [ "$CURRENT" = "blue" ]; then
+if [ "\$CURRENT" = "blue" ]; then
     DEPLOY_TARGET="green"
 else
     DEPLOY_TARGET="blue"
 fi
 
-echo "Current: $CURRENT"
-echo "Deploying: $DEPLOY_TARGET"
+echo "Current: \$CURRENT"
+echo "Deploying: \$DEPLOY_TARGET"
 
 # Update image tags
 sed -i '/ghost-blue:/,/container_name:/ s|image: .*|image: koushiksiripuram/ghost-app:'"${IMAGE_TAG}"'|' docker-compose.yaml
@@ -179,10 +179,9 @@ sed -i '/ghost-green:/,/container_name:/ s|image: .*|image: koushiksiripuram/gho
 
 sudo docker compose pull
 
-sudo docker compose up -d ghost-$DEPLOY_TARGET
+sudo docker compose up -d ghost-\$DEPLOY_TARGET
 
-echo $DEPLOY_TARGET > /tmp/deploy-target
-EOF
+echo \$DEPLOY_TARGET > /tmp/deploy-target
 """
             }
         }
@@ -194,23 +193,23 @@ EOF
         sh """
 
 ssh -o StrictHostKeyChecking=no \
--i /tmp/master.pem ubuntu@$APP_IP << 'EOF'
+-i /tmp/master.pem ubuntu@$APP_IP
 
-TARGET=$(cat /tmp/deploy-target)
+TARGET=\$(cat /tmp/deploy-target)
 
 sleep 30
 cd /home/ubuntu/app/docker
 for i in $(seq 1 20)
 do
     if sudo docker exec ghost-nginx \
-       wget -qO- http://ghost-$TARGET:2368 >/dev/null 2>&1
+       wget -qO- http://ghost-\$TARGET:2368 >/dev/null 2>&1
     then
 
         echo "Health check passed"
 
-        CURRENT=$(cat /data/current-color)
+        CURRENT=\$(cat /data/current-color)
 
-        if [ "$TARGET" = "green" ]; then
+        if [ "\$TARGET" = "green" ]; then
 
             sed -i 's/server ghost-blue:2368;/server ghost-green:2368;/g' nginx/default.conf
 
@@ -222,9 +221,9 @@ do
 
         sudo docker exec ghost-nginx nginx -s reload
 
-        echo $TARGET | sudo tee /data/current-color
+        echo \$TARGET | sudo tee /data/current-color
 
-        sudo docker rm -f ghost-$CURRENT || true
+        sudo docker rm -f ghost-\$CURRENT || true
 
         exit 0
     fi
@@ -234,7 +233,6 @@ done
 
 echo "Deployment failed"
 exit 1
-EOF
 """
     }
 }
