@@ -11,9 +11,6 @@ pipeline {
         S3_BUCKET = "${env.S3_BUCKET}"
         ALERT_EMAIL = "${env.ALERT_EMAIL}"
         TF_lOCK_TABLE = "${env.TF_LOCK_TABLE}"
-        ACTIVE = ""
-        TARGET = ""
-        HEALTHY = "false"
     }
 
     stages {
@@ -98,46 +95,16 @@ echo "APP_IP=${env.APP_IP}"
                 sh 'sleep 60'
             }
         }
-        stage('Prepare SSH Key') {
+        
 
-    steps {
-
-        sh """
-aws s3 cp s3://$S3_BUCKET/master.pem /tmp/master.pem
-chmod 400 /tmp/master.pem
-"""
-    }
-}
-
-stage('Determine Color') {
-
-    steps {
-
-        script {
-
-            env.ACTIVE = sh(
-                script: """
-ssh -o StrictHostKeyChecking=no \
--i /tmp/master.pem ubuntu@${APP_IP} \
-'cat /data/current-color 2>/dev/null || echo blue'
-""",
-                returnStdout: true
-            ).trim()
-
-            env.TARGET = (env.ACTIVE == "blue") ? "green" : "blue"
-
-            echo "ACTIVE=${env.ACTIVE}"
-            echo "TARGET=${env.TARGET}"
-        }
-    }
-}
 
         stage('Deploy To EC2') {
 
             steps {
 
                 sh """
-
+        aws s3 cp s3://$S3_BUCKET/master.pem /tmp/master.pem
+        chmod 400 /tmp/master.pem
         aws s3 cp s3://$S3_BUCKET/certbot-conf.tar.gz .
         aws s3 cp s3://$S3_BUCKET/ghost.env ghost.env
         scp -o StrictHostKeyChecking=no \
@@ -191,13 +158,19 @@ ssh -o StrictHostKeyChecking=no \
         sudo systemctl start docker
 
         cd ../docker
-        echo "Deploying to ${env.TARGET} environment"
-        sed -i '/ghost-blue:/,/container_name:/ s|image: .*|image: '"${IMAGE_NAME}:${IMAGE_TAG}"'|' docker-compose.yaml
-        sed -i '/ghost-green:/,/container_name:/ s|image: .*|image: '"${IMAGE_NAME}:${IMAGE_TAG}"'|' docker-compose.yaml
-        sudo docker compose pull 
+        ACTIVE=$(cat /data/current-color)
 
-        sudo docker compose up -d ghost-${env.TARGET}
+        if [ "$ACTIVE" = "blue" ]; then
+            TARGET="green"
+        else
+            TARGET="blue"
+        fi
 
+        echo $TARGET > /tmp/target-color
+
+        sudo docker compose pull
+        sudo docker compose up -d ghost-$TARGET
+        
         EOF
 """
             }
@@ -208,36 +181,38 @@ ssh -o StrictHostKeyChecking=no \
     steps {
 
         sh """
+
+ssh -o StrictHostKeyChecking=no \
+-i /tmp/master.pem ubuntu@$APP_IP << 'EOF'
+
+ACTIVE=$(cat /data/current-color)
+TARGET=$(cat /tmp/target-color)
+
+echo "ACTIVE=$ACTIVE"
+echo "TARGET=$TARGET"
+
 sleep 30
+
+HEALTHY=false
 
 for i in {1..20}
 do
-    if ssh -o StrictHostKeyChecking=no \
-       -i /tmp/master.pem ubuntu@${APP_IP} \
-       "sudo docker exec ghost-nginx wget -qO- http://ghost-${env.TARGET}:2368 > /dev/null 2>&1"
+    if sudo docker exec ghost-nginx \
+        wget -qO- http://ghost-$TARGET:2368 > /dev/null 2>&1
     then
-        exit 0
+        HEALTHY=true
+        break
     fi
 
     sleep 5
 done
 
-echo "Deployment failed"
-exit 1
-"""
-    }
-}
-stage('Switch Traffic') {
+if [ "$HEALTHY" != "true" ]; then
+    echo "Deployment failed"
+    exit 1
+fi
 
-    steps {
-
-        sh """
-ssh -o StrictHostKeyChecking=no \
--i /tmp/master.pem ubuntu@${APP_IP} << EOF
-
-cd /home/ubuntu/app/docker
-
-if [ "${env.TARGET}" = "green" ]; then
+if [ "$TARGET" = "green" ]; then
 
     sed -i 's/server ghost-blue:2368;/server ghost-green:2368;/g' nginx/default.conf
 
@@ -249,14 +224,18 @@ fi
 
 sudo docker exec ghost-nginx nginx -s reload
 
-echo ${env.TARGET} | sudo tee /data/current-color
+echo $TARGET | sudo tee /data/current-color
 
-sudo docker stop ghost-${env.ACTIVE} || true
+sudo docker stop ghost-$ACTIVE || true
+
+echo "Traffic switched to $TARGET"
 
 EOF
 """
     }
 }
+
+
     }
 
     post {
