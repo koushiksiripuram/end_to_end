@@ -159,15 +159,29 @@ sudo systemctl start docker
 
 cd ../docker
 
-sudo docker compose down --remove-orphans
+// sudo docker compose down --remove-orphans
 
-sudo docker network prune -f
+// sudo docker network prune -f
 
-sudo docker image rm ${IMAGE_NAME}:${IMAGE_TAG} || true
+// sudo docker image rm ${IMAGE_NAME}:${IMAGE_TAG} || true
 
-sudo docker compose pull
+// sudo docker compose pull
 
-sudo docker compose up -d --force-recreate
+// sudo docker compose up -d --force-recreate
+if [ ! -f /data/current-color ]; then
+    echo blue | sudo tee /data/current-color
+fi
+
+ACTIVE=$(cat /data/current-color)
+
+if [ "$ACTIVE" = "blue" ]; then
+    TARGET="green"
+else
+    TARGET="blue"
+fi
+sudo docker pull ${IMAGE_NAME}:${IMAGE_TAG}
+
+sudo docker compose up -d ghost-$TARGET
 
 EOF
 """
@@ -180,8 +194,35 @@ EOF
 
                 sh """
 sleep 30
+curl -I https://ghostapp.duckdns.org
+for i in {1..20}
+do
+    if sudo docker exec ghost-nginx wget -qO- http://ghost-$TARGET:2368 > /dev/null 2>&1
+    then
+        HEALTHY=true
+        break
+    fi
 
-curl -Ik https://ghostapp.duckdns.org
+    sleep 5
+done
+
+if [ "$HEALTHY" != "true" ]; then
+    echo "Deployment failed"
+    exit 1
+fi
+
+if [ "$TARGET" = "green" ]; then
+
+    sudo sed -i 's/server ghost-blue:2368;/server ghost-green:2368;/g' nginx/default.conf
+
+else
+
+    sudo sed -i 's/server ghost-green:2368;/server ghost-blue:2368;/g' nginx/default.conf
+
+fi
+sudo docker exec ghost-nginx nginx -s reload
+echo $TARGET | sudo tee /data/current-color
+sudo docker stop ghost-$ACTIVE
 """
             }
         }

@@ -23,10 +23,34 @@ services:
       timeout: 5s
       retries: 10
 
-  ghost:
+  ghost-blue:
     image: koushiksiripuram/ghost-app:latest
-    container_name: ghost-app
+    container_name: ghost-blue
     restart: always
+
+    expose:
+    - "2368"
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    volumes:
+      - /data/ghost:/var/lib/ghost/content
+      - ../content/themes:/var/lib/ghost/content/themes
+
+    environment:
+      database__client: mysql
+      database__connection__host: mysql
+      database__connection__user: ${MYSQL_USER}
+      database__connection__password: ${MYSQL_PASSWORD}
+      database__connection__database: ${MYSQL_DATABASE}
+      url: https://ghostapp.duckdns.org
+
+  ghost-green:
+    image: koushiksiripuram/ghost-app:latest
+    container_name: ghost-green
+    restart: "no"
 
     expose:
       - "2368"
@@ -45,7 +69,6 @@ services:
       database__connection__user: ${MYSQL_USER}
       database__connection__password: ${MYSQL_PASSWORD}
       database__connection__database: ${MYSQL_DATABASE}
-
       url: https://ghostapp.duckdns.org
 
   nginx:
@@ -54,7 +77,7 @@ services:
     restart: always
 
     depends_on:
-      - ghost
+      - ghost-blue
 
     ports:
       - "80:80"
