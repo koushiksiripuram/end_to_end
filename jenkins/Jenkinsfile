@@ -156,18 +156,32 @@ echo "APP_IP=${env.APP_IP}"
         sudo systemctl start docker
 
         cd ../docker
-        ACTIVE=\$(cat /data/current-color)
+        # First deployment bootstrap
+if [ ! -f /data/current-color ]; then
+    echo blue | sudo tee /data/current-color
+fi
 
-        if [ "\$ACTIVE" = "blue" ]; then
-            TARGET="green"
-        else
-            TARGET="blue"
-        fi
+CURRENT=$(cat /data/current-color)
 
-        echo \$TARGET > /tmp/target-color
+if [ "$CURRENT" = "blue" ]; then
+    DEPLOY_TARGET="green"
+else
+    DEPLOY_TARGET="blue"
+fi
 
-        sudo docker compose pull
-        sudo docker compose up -d ghost-\$TARGET
+echo "Current: $CURRENT"
+echo "Deploying: $DEPLOY_TARGET"
+
+# Update image tags
+sed -i '/ghost-blue:/,/container_name:/ s|image: .*|image: koushiksiripuram/ghost-app:'"${IMAGE_TAG}"'|' docker-compose.yaml
+
+sed -i '/ghost-green:/,/container_name:/ s|image: .*|image: koushiksiripuram/ghost-app:'"${IMAGE_TAG}"'|' docker-compose.yaml
+
+sudo docker compose pull
+
+sudo docker compose up -d ghost-$DEPLOY_TARGET
+
+echo $DEPLOY_TARGET > /tmp/deploy-target
         
         EOF
 """
@@ -183,50 +197,45 @@ echo "APP_IP=${env.APP_IP}"
 ssh -o StrictHostKeyChecking=no \
 -i /tmp/master.pem ubuntu@$APP_IP << 'EOF'
 
-ACTIVE=\$(cat /data/current-color)
-TARGET=\$(cat /tmp/target-color)
-
-echo "ACTIVE=\$ACTIVE"
-echo "TARGET=\$TARGET"
+TARGET=$(cat /tmp/deploy-target)
 
 sleep 30
-
-HEALTHY=false
 
 for i in {1..20}
 do
     if sudo docker exec ghost-nginx \
-        wget -qO- http://ghost-\$TARGET:2368 > /dev/null 2>&1
+       wget -qO- http://ghost-$TARGET:2368 >/dev/null 2>&1
     then
-        HEALTHY=true
-        break
+
+        echo "Health check passed"
+
+        CURRENT=$(cat /data/current-color)
+
+        if [ "$TARGET" = "green" ]; then
+
+            sed -i 's/server ghost-blue:2368;/server ghost-green:2368;/g' nginx/default.conf
+
+        else
+
+            sed -i 's/server ghost-green:2368;/server ghost-blue:2368;/g' nginx/default.conf
+
+        fi
+
+        sudo docker exec ghost-nginx nginx -s reload
+
+        echo $TARGET | sudo tee /data/current-color
+
+        sudo docker stop ghost-$CURRENT || true
+
+        exit 0
     fi
 
     sleep 5
 done
 
-if [ "\$HEALTHY" != "true" ]; then
-    echo "Deployment failed"
-    exit 1
-fi
+echo "Deployment failed"
+exit 1
 
-if [ "$TARGET" = "green" ]; then
-
-    sed -i 's/server ghost-blue:2368;/server ghost-green:2368;/g' nginx/default.conf
-
-else
-
-    sed -i 's/server ghost-green:2368;/server ghost-blue:2368;/g' nginx/default.conf
-
-fi
-
-sudo docker exec ghost-nginx nginx -s reload
-
-echo \$TARGET | sudo tee /data/current-color
-
-sudo docker stop ghost-\$ACTIVE || true
-
-echo "Traffic switched to \$TARGET"
 
 EOF
 """
