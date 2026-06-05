@@ -171,7 +171,7 @@ else
 fi
 sudo docker pull ${IMAGE_NAME}:${IMAGE_TAG}
 
-sudo docker compose up -d ghost-$TARGET
+sudo docker compose up -d ghost-\$TARGET
 
 EOF
 """
