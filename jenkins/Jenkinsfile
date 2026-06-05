@@ -134,7 +134,7 @@ ubuntu@$APP_IP:/home/ubuntu/
 
 ssh -o StrictHostKeyChecking=no \
 -i /tmp/master.pem ubuntu@$APP_IP \
-"chmod +x /home/ubuntu/health-check.sh && bash /home/ubuntu/health-check.sh"
+"chmod +x /home/ubuntu/health-check.sh && bash /home/ubuntu/health.sh"
 """
     }
 }
