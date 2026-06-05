@@ -146,8 +146,6 @@ echo "APP_IP=${env.APP_IP}"
 
         tar -xzvf certbot-conf.tar.gz
 
-        sed -i '/  ghost:/,/  nginx:/ s|image: .*|image: '"${IMAGE_NAME}:${IMAGE_TAG}"'|' docker-compose.yaml
-
         cd ../scripts
 
         chmod +x install.sh
