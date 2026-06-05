@@ -129,7 +129,7 @@ ssh -o StrictHostKeyChecking=no \
          sh """
 scp -o StrictHostKeyChecking=no \
 -i /tmp/master.pem \
-scripts/health-check.sh \
+scripts/health.sh \
 ubuntu@$APP_IP:/home/ubuntu/
 
 ssh -o StrictHostKeyChecking=no \
