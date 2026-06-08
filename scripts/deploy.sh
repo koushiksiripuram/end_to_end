@@ -60,9 +60,7 @@ fi
 echo "Current: $CURRENT"
 echo "Deploying: $DEPLOY_TARGET"
 
-sed -i "/ghost-blue:/,/container_name:/ s|image: .*|image: ${IMAGE_NAME}:${IMAGE_TAG}|" docker-compose.yaml
-
-sed -i "/ghost-green:/,/container_name:/ s|image: .*|image: ${IMAGE_NAME}:${IMAGE_TAG}|" docker-compose.yaml
+sed -i "/ghost-$DEPLOY_TARGET:/,/container_name:/ s|image: .*|image: ${IMAGE_NAME}:${IMAGE_TAG}|" docker-compose.yaml
 
 sudo docker compose pull
 

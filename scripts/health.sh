@@ -12,14 +12,13 @@ cd /home/ubuntu/app/docker
 for i in $(seq 1 20)
 do
     STATUS=$(sudo docker exec ghost-nginx \
-        curl -s -o /dev/null -w "%{http_code}" \
-        http://ghost-$TARGET:2368)
+    curl -k -L -s -o /dev/null -w "%{http_code}" \
+    -H "Host: ghostapp.duckdns.org" \
+    http://ghost-$TARGET:2368)
 
-    echo "Attempt $i - HTTP Status: $STATUS"
+    echo "STATUS=$STATUS"
 
-    if [ "$STATUS" = "200" ] || \
-       [ "$STATUS" = "301" ] || \
-       [ "$STATUS" = "302" ]; then
+    if [ "$STATUS" = "200" ]; then
 
         echo "Health check passed"
 
@@ -43,10 +42,6 @@ do
         sudo docker exec ghost-nginx nginx -s reload
 
         echo "$TARGET" | sudo tee /data/current-color
-
-        echo "Stopping old environment: $CURRENT"
-
-        sudo docker stop ghost-$CURRENT || true
 
         echo "Traffic switched successfully to $TARGET"
 
