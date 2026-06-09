@@ -17,14 +17,20 @@ fi
 
 sudo mkdir -p /data/ghost
 sudo mkdir -p /data/mysql
-
+sudo mkdir -p /data/certbot/conf
+sudo mkdir -p /data/certbot/www
 sudo chown -R 999:999 /data/mysql
 sudo chmod -R 755 /data/mysql
 
 sudo chown -R 999:999 /data/ghost
 sudo chmod -R 755 /data/ghost
-
+sudo chown -R 999:999 /data/certbot
+sudo chmod -R 755 /data/certbot
 rm -rf app
+
+if [ ! -f /data/certbot/conf/live/ghostapp.duckdns.org/fullchain.pem ]; then
+    tar -xzvf certbot-conf.tar.gz -C /data/certbot
+fi
 
 git clone https://github.com/koushiksiripuram/end_to_end.git app
 
@@ -32,8 +38,6 @@ mv /home/ubuntu/certbot-conf.tar.gz /home/ubuntu/app/docker/
 mv /home/ubuntu/ghost.env /home/ubuntu/app/docker/.env
 
 cd /home/ubuntu/app/docker
-
-tar -xzvf certbot-conf.tar.gz
 
 cd ../scripts
 

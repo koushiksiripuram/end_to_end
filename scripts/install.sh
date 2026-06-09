@@ -16,5 +16,8 @@ rm get-docker.sh
 
 sudo apt install certbot -y
 
+sudo growpart /dev/nvme0n1 1 || true
+sudo resize2fs /dev/nvme0n1p1 || true
+
 echo "Installation complete. Please log out and back in for group changes to take effect."
 
