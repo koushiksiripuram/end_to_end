@@ -19,6 +19,7 @@ sudo mkdir -p /data/ghost
 sudo mkdir -p /data/mysql
 sudo mkdir -p /data/certbot
 sudo chown -R 999:999 /data/mysql
+
 sudo chmod -R 755 /data/mysql
 
 sudo chown -R 999:999 /data/ghost
