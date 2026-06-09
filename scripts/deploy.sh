@@ -28,6 +28,11 @@ rm -rf app
 
 if [ ! -f /data/certbot/conf/live/ghostapp.duckdns.org/fullchain.pem ]; then
     sudo tar -xzvf certbot-conf.tar.gz -C /data
+
+    sudo chmod 755 /data/certbot/conf/live
+    sudo chmod 755 /data/certbot/conf/live/ghostapp.duckdns.org
+    sudo chmod 755 /data/certbot/conf/archive
+    sudo chmod 755 /data/certbot/conf/archive/ghostapp.duckdns.org
 fi
 
 git clone https://github.com/koushiksiripuram/end_to_end.git app
