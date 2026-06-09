@@ -24,7 +24,8 @@ sudo chmod -R 755 /data/mysql
 
 sudo chown -R 999:999 /data/ghost
 sudo chmod -R 755 /data/ghost
-rm -rf app
+
+sudo rm -rf app
 
 if [ ! -f /data/certbot/conf/live/ghostapp.duckdns.org/fullchain.pem ]; then
     sudo tar -xzvf certbot-conf.tar.gz -C /data
@@ -37,7 +38,6 @@ fi
 
 git clone https://github.com/koushiksiripuram/end_to_end.git app
 
-mv /home/ubuntu/certbot-conf.tar.gz /home/ubuntu/app/docker/
 mv /home/ubuntu/ghost.env /home/ubuntu/app/docker/.env
 
 cd /home/ubuntu/app/docker
