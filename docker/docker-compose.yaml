@@ -37,6 +37,7 @@ services:
 
     volumes:
       - /data/ghost:/var/lib/ghost/content
+      - /data/ghost-logs/blue:/var/lib/ghost/content/logs
       - ../content/themes:/var/lib/ghost/content/themes
 
     environment:
@@ -61,6 +62,7 @@ services:
 
     volumes:
       - /data/ghost:/var/lib/ghost/content
+      - /data/ghost-logs/green:/var/lib/ghost/content/logs
       - ../content/themes:/var/lib/ghost/content/themes
 
     environment:

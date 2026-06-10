@@ -19,7 +19,8 @@ do
     echo "STATUS=$STATUS"
 
     if [ "$STATUS" = "200" ]; then
-
+        docker inspect ghost-blue | grep ghost-logs
+        docker inspect ghost-green | grep ghost-logs
         echo "Health check passed"
 
         CURRENT=$(cat /data/current-color)
@@ -39,7 +40,7 @@ do
 
         echo "Restarting nginx"
 
-        sudo docker restart ghost-nginx
+        sudo docker exec ghost-nginx nginx -t && docker exec ghost-nginx nginx -s reload
 
         echo "$TARGET" | sudo tee /data/current-color
 

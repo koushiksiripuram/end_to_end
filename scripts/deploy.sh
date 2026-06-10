@@ -19,7 +19,10 @@ sudo mkdir -p /data/ghost
 sudo mkdir -p /data/mysql
 sudo mkdir -p /data/certbot
 sudo chown -R 999:999 /data/mysql
+sudo mkdir -p /data/ghost-logs/blue
+sudo mkdir -p /data/ghost-logs/green
 
+sudo chmod -R 755 /data/ghost-logs
 sudo chmod -R 755 /data/mysql
 
 sudo chown -R 999:999 /data/ghost
