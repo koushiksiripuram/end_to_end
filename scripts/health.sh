@@ -19,8 +19,8 @@ do
     echo "STATUS=$STATUS"
 
     if [ "$STATUS" = "200" ]; then
-        docker inspect ghost-blue | grep ghost-logs
-        docker inspect ghost-green | grep ghost-logs
+        docker inspect ghost-blue | grep ghost-logs || true
+        docker inspect ghost-green | grep ghost-logs || true
         echo "Health check passed"
 
         CURRENT=$(cat /data/current-color)

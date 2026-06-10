@@ -69,7 +69,9 @@ fi
 
 echo "Current: $CURRENT"
 echo "Deploying: $DEPLOY_TARGET"
-
+CURRENT_TAG=$(sudo docker inspect ghost-green \
+  --format='{{.Config.Image}}' | awk -F: '{print $NF}')
+sed -i "/ghost-$CURRENT:/,/container_name:/ s|image: .*|image: ${IMAGE_NAME}:${CURRENT_TAG}|" docker-compose.yaml
 sed -i "/ghost-$DEPLOY_TARGET:/,/container_name:/ s|image: .*|image: ${IMAGE_NAME}:${IMAGE_TAG}|" docker-compose.yaml
 
 sudo docker compose pull
