@@ -40,7 +40,7 @@ do
 
         echo "Restarting nginx"
         sleep 6
-        sudo docker exec ghost-nginx nginx -t && docker exec ghost-nginx nginx -s reload
+        sudo docker restart ghost-nginx
 
         echo "$TARGET" | sudo tee /data/current-color
 
